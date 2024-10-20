@@ -3,7 +3,7 @@
 // @description  Allows you to download ".crx" files directly from Chrome Web Store and Microsoft Edge Addons websites.
 // @namespace    http://tampermonkey.net/
 // @icon         https://www.chromium.org/favicon.ico
-// @version      1.0.0
+// @version      1.0.1
 // @author       AngelBruni
 // @match        https://chromewebstore.google.com/*
 // @match        https://microsoftedge.microsoft.com/*
