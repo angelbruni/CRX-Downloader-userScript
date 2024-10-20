@@ -18,6 +18,9 @@ function enableInstallBtn() {
 	if (window.location.href.includes("https://chromewebstore.google.com/detail/")) {
 		extensionId = window.location.href.split("/").pop();
 
+		if (extensionId.includes = "?")
+            extensionId = extensionId.split("?")[0];
+
 		getBtn = document.querySelector(`[data-p*="${extensionId}"] button[jsaction*="click"][jsaction*="clickmod"][jsaction*="pointerdown"][jsaction*="pointerup"][jsaction*="pointerenter"][jsaction*="pointerleave"][jsaction*="pointercancel"][jsaction*="contextmenu"][jsaction*="focus"][jsaction*="blur"][disabled=""]`);
 		getBtn.removeAttribute("disabled");
 
