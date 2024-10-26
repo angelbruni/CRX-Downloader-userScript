@@ -3,19 +3,37 @@
 // @description  Allows you to download ".crx" files directly from Chrome Web Store and Microsoft Edge Addons websites.
 // @namespace    http://tampermonkey.net/
 // @icon         https://www.chromium.org/favicon.ico
-// @version      1.0.2
+// @version      1.0.3
 // @author       AngelBruni
 // @match        https://chromewebstore.google.com/*
 // @match        https://microsoftedge.microsoft.com/*
+// @match        https://web.archive.org/web/2011*/https://chrome.google.com/webstore/*
 // ==/UserScript==
 
 function enableInstallBtn() {
+    let version;
 	let extensionId;
 	let cdnurl;
 
 	let getBtn;
 
-	if (window.location.href.includes("https://chromewebstore.google.com/detail/")) {
+    if (window.location.href.includes("https://chrome.google.com/webstore/detail/")) {
+        extensionId = window.location.href.split("/").pop();
+
+		if (extensionId.includes = "?")
+            extensionId = extensionId.split("?")[0];
+
+        document.querySelector("#cwspage.cx-cannot-install").classList.remove("cx-cannot-install");
+
+        getBtn = document.querySelector("#cx-install-free-btn");
+        getBtn.removeAttribute("href");
+
+        version = "130.0";
+        cdnurl = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=${version}&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
+        getBtn.addEventListener("click", () => {
+            window.location.href = cdnurl;
+        });
+    } else if (window.location.href.includes("https://chromewebstore.google.com/detail/")) {
 		extensionId = window.location.href.split("/").pop();
 
 		if (extensionId.includes = "?")
@@ -24,9 +42,10 @@ function enableInstallBtn() {
 		getBtn = document.querySelector(`[data-p*="${extensionId}"] button[jsaction*="click"][jsaction*="clickmod"][jsaction*="pointerdown"][jsaction*="pointerup"][jsaction*="pointerenter"][jsaction*="pointerleave"][jsaction*="pointercancel"][jsaction*="contextmenu"][jsaction*="focus"][jsaction*="blur"][disabled=""]`);
 		getBtn.removeAttribute("disabled");
 
+        version = "130.0";
+        cdnurl = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=${version}&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
+
 		getBtn.addEventListener("click", () => {
-			const version = "130.0";
-			cdnurl = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=${version}&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
 			window.location.href = cdnurl;
 		});
 	} else if (window.location.href.includes("https://microsoftedge.microsoft.com/addons/")) {
