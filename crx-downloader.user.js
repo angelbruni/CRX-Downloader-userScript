@@ -1,99 +1,84 @@
 // ==UserScript==
 // @name         CRX Downloader
-// @description  Allows you to download ".crx" files directly from Chrome Web Store and Microsoft Edge Addons websites.
+// @description  Allows for downloading ".crx" files directly from Chrome Web Store and Microsoft Edge Addons websites.
 // @namespace    http://tampermonkey.net/
 // @icon         https://www.chromium.org/favicon.ico
-// @version      1.0.3
+// @version      1.0.4
 // @author       AngelBruni
 // @match        https://chromewebstore.google.com/*
 // @match        https://microsoftedge.microsoft.com/*
 // @match        https://web.archive.org/web/2011*/https://chrome.google.com/webstore/*
 // ==/UserScript==
 
-function enableInstallBtn() {
-    let version;
-	let extensionId;
-	let cdnurl;
+(function() {
+	const VERSION = "130.0";
 
-	let getBtn;
-
-    if (window.location.href.includes("https://chrome.google.com/webstore/detail/")) {
-        extensionId = window.location.href.split("/").pop();
-
-		if (extensionId.includes = "?")
-            extensionId = extensionId.split("?")[0];
-
-        document.querySelector("#cwspage.cx-cannot-install").classList.remove("cx-cannot-install");
-
-        getBtn = document.querySelector("#cx-install-free-btn");
-        getBtn.removeAttribute("href");
-
-        version = "130.0";
-        cdnurl = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=${version}&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
-        getBtn.addEventListener("click", () => {
-            window.location.href = cdnurl;
-        });
-    } else if (window.location.href.includes("https://chromewebstore.google.com/detail/")) {
-		extensionId = window.location.href.split("/").pop();
-
-		if (extensionId.includes = "?")
-            extensionId = extensionId.split("?")[0];
-
-		getBtn = document.querySelector(`[data-p*="${extensionId}"] button[jsaction*="click"][jsaction*="clickmod"][jsaction*="pointerdown"][jsaction*="pointerup"][jsaction*="pointerenter"][jsaction*="pointerleave"][jsaction*="pointercancel"][jsaction*="contextmenu"][jsaction*="focus"][jsaction*="blur"][disabled=""]`);
-		getBtn.removeAttribute("disabled");
-
-        version = "130.0";
-        cdnurl = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=${version}&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
-
-		getBtn.addEventListener("click", () => {
-			window.location.href = cdnurl;
-		});
-	} else if (window.location.href.includes("https://microsoftedge.microsoft.com/addons/")) {
-		if (window.location.href.includes("https://microsoftedge.microsoft.com/addons/detail/")) {
-			extensionId = window.location.href.split("/").pop();
-
-			if (extensionId.includes = "?")
-				extensionId = extensionId.split("?")[0];
-
-			setTimeout(() => {
-				getBtn = document.querySelector(`#getOrRemoveButton-${extensionId}`);
-
-				getBtn.removeAttribute("disabled");
-				getBtn.style.setProperty ("cursor", "pointer", "important");
-				getBtn.style.opacity = 1;
-
-				cdnurl = `https://edge.microsoft.com/extensionwebstorebase/v1/crx?response=redirect&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
-
-				getBtn.addEventListener("click", () => {
-					window.location.href = cdnurl;
-				});
-			}, 1500);
-		} else {
-			// Yes, this runs every half a second, I am too lazy and the buttons get created on hover which is annoying to keep track of.
-			setInterval(function() {
-				getBtn = document.querySelectorAll(`button[id*="getOrRemoveButton"]`);
-				getBtn.forEach(btn => {
-					btn.removeAttribute("disabled");
-					btn.style.setProperty ("cursor", "pointer", "important");
-					btn.style.opacity = 1;
-
-					extensionId = btn.id.split("-").pop();
-					cdnurl = `https://edge.microsoft.com/extensionwebstorebase/v1/crx?response=redirect&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
-
-					btn.addEventListener("click", () => {
-						window.location.href = cdnurl;
-					});
-				});
-			}, 500);
-		}
+	function extractExtensionId() {
+		const urlParts = window.location.href.split("/");
+		let extensionId = urlParts.pop();
+		return extensionId.includes("?") ? extensionId.split("?")[0] : extensionId;
 	}
-}
-enableInstallBtn();
 
-const titleObserver = new MutationObserver(function(mutations) {
-	mutations.forEach(function(mutation) {
-		if (mutation.type === 'childList')
-			enableInstallBtn();
-	});
-});
-titleObserver.observe(document.querySelector('title'), { childList: true });
+	function generateCdnUrl(extensionId, isChrome = true) {
+		const baseUrl = isChrome
+			? `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=${VERSION}`
+			: "https://edge.microsoft.com/extensionwebstorebase/v1/crx?response=redirect";
+		return `${baseUrl}&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
+	}
+
+	function enableChromeGoogleStoreDownload(extensionId) {
+		document.querySelector("#cwspage.cx-cannot-install").classList.remove("cx-cannot-install");
+
+		const addBtn = document.querySelector("#cx-install-free-btn");
+		if (!addBtn) return;
+
+		addBtn.removeAttribute("disabled");
+		addBtn.addEventListener("click", () => { window.location.href = generateCdnUrl(extensionId); });
+	}
+
+	function enableChromeWebStoreDownload(extensionId) {
+		const addBtn = document.querySelector(`[data-p*="${extensionId}"] button[jsaction*="click"]`);
+		if (!addBtn) return;
+
+		addBtn.removeAttribute("disabled");
+		addBtn.addEventListener("click", () => { window.location.href = generateCdnUrl(extensionId); });
+	}
+
+	function enableEdgeDownload(extensionId) {
+		const getBtn = document.querySelector(`#getOrRemoveButton-${extensionId}`);
+		if (!getBtn) return;
+		
+		getBtn.removeAttribute("disabled");
+		getBtn.style.setProperty ("cursor", "pointer", "important");
+		getBtn.style.opacity = 1;
+		getBtn.addEventListener("click", () => { window.location.href = generateCdnUrl(extensionId, false); });
+	}
+
+	function enableAllEdgeButtons() {
+		document.querySelectorAll(`button[id*="getOrRemoveButton"]`).forEach(getBtn => {
+			const extensionId = getBtn.id.split("-").pop();
+			getBtn.removeAttribute("disabled");
+			getBtn.style.setProperty ("cursor", "pointer", "important");
+			getBtn.style.opacity = 1;
+			getBtn.addEventListener("click", () => { window.location.href = generateCdnUrl(extensionId, false); });
+		});
+	}
+
+	function initDownloader() {
+		const url = window.location.href;
+		const extensionId = extractExtensionId();
+
+		if (url.includes("chrome.google.com/webstore/detail/"))
+			enableChromeGoogleStoreDownload(extensionId);
+		else if (url.includes("chromewebstore.google.com/detail/"))
+			enableChromeWebStoreDownload(extensionId);
+		else if (url.includes("microsoftedge.microsoft.com/addons/detail/"))
+			enableEdgeDownload(extensionId);
+		else if (url.includes("microsoftedge.microsoft.com/addons/"))
+			setInterval(enableAllEdgeButtons, 500); // Yes, this runs every half a second, I am too lazy and the buttons get created on hover which is annoying to keep track of.
+	}
+
+	initDownloader();
+	const titleObserver = new MutationObserver(() => { initDownloader(); });
+	titleObserver.observe(document.querySelector('title'), { childList: true });
+})();
