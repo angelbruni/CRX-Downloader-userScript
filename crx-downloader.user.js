@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         CRX Downloader
-// @description  Allows for downloading ".crx" files directly from Chrome Web Store and Microsoft Edge Addons websites.
+// @description  Allows you to download ".crx" files directly from Chrome Web Store and Microsoft Edge Addons websites.
 // @namespace    http://tampermonkey.net/
 // @icon         https://www.chromium.org/favicon.ico
-// @version      1.0.4
+// @version      1.0.5
 // @author       AngelBruni
 // @match        https://chromewebstore.google.com/*
 // @match        https://microsoftedge.microsoft.com/*
@@ -29,25 +29,22 @@
 	function enableChromeGoogleStoreDownload(extensionId) {
 		document.querySelector("#cwspage.cx-cannot-install").classList.remove("cx-cannot-install");
 
-		const addBtn = document.querySelector("#cx-install-free-btn");
+		const addBtn = document.querySelector("#cx-install-free-btn[disabled]");
 		if (!addBtn) return;
-
 		addBtn.removeAttribute("disabled");
 		addBtn.addEventListener("click", () => { window.location.href = generateCdnUrl(extensionId); });
 	}
 
 	function enableChromeWebStoreDownload(extensionId) {
-		const addBtn = document.querySelector(`[data-p*="${extensionId}"] button[jsaction*="click"]`);
+		const addBtn = document.querySelector(`[data-p*="${extensionId}"] button[jsaction*="click"][disabled]:not([aria-label])`);
 		if (!addBtn) return;
-
 		addBtn.removeAttribute("disabled");
 		addBtn.addEventListener("click", () => { window.location.href = generateCdnUrl(extensionId); });
 	}
 
 	function enableEdgeDownload(extensionId) {
-		const getBtn = document.querySelector(`#getOrRemoveButton-${extensionId}`);
+		const getBtn = document.querySelector(`#getOrRemoveButton-${extensionId}[disabled]`);
 		if (!getBtn) return;
-		
 		getBtn.removeAttribute("disabled");
 		getBtn.style.setProperty ("cursor", "pointer", "important");
 		getBtn.style.opacity = 1;
@@ -55,7 +52,7 @@
 	}
 
 	function enableAllEdgeButtons() {
-		document.querySelectorAll(`button[id*="getOrRemoveButton"]`).forEach(getBtn => {
+		document.querySelectorAll(`button[id*="getOrRemoveButton"][disabled]`).forEach(getBtn => {
 			const extensionId = getBtn.id.split("-").pop();
 			getBtn.removeAttribute("disabled");
 			getBtn.style.setProperty ("cursor", "pointer", "important");
