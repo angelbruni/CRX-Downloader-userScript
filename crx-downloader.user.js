@@ -3,15 +3,64 @@
 // @description  Allows you to download ".crx" files directly from Chrome Web Store and Microsoft Edge Addons websites.
 // @namespace    http://tampermonkey.net/
 // @icon         https://www.chromium.org/favicon.ico
-// @version      1.0.5
+// @version      1.0.6
 // @author       AngelBruni
 // @match        https://chromewebstore.google.com/*
 // @match        https://microsoftedge.microsoft.com/*
-// @match        https://web.archive.org/web/2011*/https://chrome.google.com/webstore/*
+// @match        https://web.archive.org/web/2011*/https://chrome.google.com/webstore*
 // ==/UserScript==
 
 (function() {
 	const VERSION = "130.0";
+
+	function waitForElm(selector) {
+		return new Promise(resolve => {
+			if (document.querySelector(selector))
+				return resolve(document.querySelector(selector));
+	
+			const observer = new MutationObserver(mutations => {
+				if (document.querySelector(selector)) {
+					observer.disconnect();
+					resolve(document.querySelector(selector));
+				}
+			});
+	
+			// If you get "parameter 1 is not of type 'Node'" error, see https://stackoverflow.com/a/77855838/492336
+			observer.observe(document.body, {
+				childList: true,
+				subtree: true
+			});
+		});
+	}
+
+	function removePromo() {
+		const url = window.location.href;
+		if (url.includes("chrome.google.com/webstore")) {
+			const promoBannerSelector = '#cx-browser-warning';
+			waitForElm(promoBannerSelector).then(() => {
+				const promoBannerElm = document.querySelector(promoBannerSelector);
+				promoBannerElm.remove();
+			});
+		} else if (url.includes("chromewebstore.google.com")) {
+			const promoCardSelector = '[aria-labelledby="promo-header"]';
+			waitForElm(promoCardSelector).then(() => {
+				const promoCardElm = document.querySelector(promoCardSelector);
+				promoCardElm.remove();
+			});
+
+			const promoBannerSelector = '#c6';
+			waitForElm(promoBannerSelector).then(() => {
+				const promoBannerElm = document.querySelector(promoBannerSelector);
+				promoBannerElm.remove();
+			});
+		} else if (url.includes("microsoftedge.microsoft.com")) {
+			const promoBannerSelector = '.BannerRedesigned[role="banner"]';
+			waitForElm(promoBannerSelector).then(() => {
+				const promoBannerElm = document.querySelector(promoBannerSelector);
+				promoBannerElm.remove();
+			});
+		}
+	}
 
 	function extractExtensionId() {
 		const urlParts = window.location.href.split("/");
@@ -52,7 +101,11 @@
 	}
 
 	function enableAllEdgeButtons() {
-		document.querySelectorAll(`button[id*="getOrRemoveButton"][disabled]`).forEach(getBtn => {
+		document.querySelectorAll(`
+			button[id*="getOrRemoveButton"][disabled],
+			button[id*="installButton"][disabled],
+			button[name="GetButton"]
+		`).forEach(getBtn => {
 			const extensionId = getBtn.id.split("-").pop();
 			getBtn.removeAttribute("disabled");
 			getBtn.style.setProperty ("cursor", "pointer", "important");
@@ -75,6 +128,7 @@
 			setInterval(enableAllEdgeButtons, 500); // Yes, this runs every half a second, I am too lazy and the buttons get created on hover which is annoying to keep track of.
 	}
 
+	removePromo();
 	initDownloader();
 	const titleObserver = new MutationObserver(() => { initDownloader(); });
 	titleObserver.observe(document.querySelector('title'), { childList: true });
